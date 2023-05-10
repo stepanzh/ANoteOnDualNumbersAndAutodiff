@@ -1,0 +1,319 @@
+%!TEX program = xelatex
+
+% jlcode.sty
+% https://github.com/wg030/jlcode
+% JuliaMono*.ttf are used by jlcode.
+
+\documentclass{article}
+
+\usepackage{euler}
+
+\usepackage[no-math]{fontspec}
+\setmainfont{Linux Libertine O}
+
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{biblatex}
+  \addbibresource{literature.bib}
+\usepackage{cancel}
+\usepackage[charsperline=92]{jlcode}
+  \renewcommand{\lstlistingname}{Лист.}  % from listings package
+\usepackage{hyperref}
+\usepackage{tikz}
+  \usetikzlibrary{positioning}
+
+% https://tex.stackexchange.com/questions/229638/package-biblatex-warning-babel-polyglossia-detected-but-csquotes-missing
+\usepackage{csquotes}
+
+\usepackage[
+  type={CC},
+  modifier={by},
+  version={4.0},
+]{doclicense}
+
+\newcommand{\dual}{\varepsilon}
+\newcommand{\realset}{\mathbb{R}}
+\newcommand{\dualset}{\mathbb{D}}
+
+\newtheorem{statement}{Утверждение}
+
+\theoremstyle{definition}
+\newtheorem{example}{Пример}
+
+\title{Заметка о дуальных числах и автоматическом дифференцировании\footnote{\doclicenseLongText}}
+\author{Степан Захаров\footnote{\href{mailto:stepanzh@gmail.com}{stepanzh@gmail.com}, \href{https://github.com/stepanzh/}{github.com/stepanzh}}}
+\date{11 мая 2023 г.}
+
+\begin{document}
+
+\maketitle
+
+\section{Дуальные числа}
+\textbf{Дуальные} числа $\dualset$ расширяют действительные $\realset$ числом $\varepsilon$, для которого определяется следующие правила
+\[
+  \dual{}  \neq 0, \quad \dual{}  \cdot 0 = 0, \quad \text{но} \quad \dual{} \cdot \dual{}  = \dual{}^2 = 0
+.\]
+Например, в дуальных числах уравнение $x^2 = 0$ имеет корни $0, \dual{}^2, \dual{}^3,\dots$
+
+Запись дуальных чисел аналогична записи комплексных
+\[
+  a + b \dual, \quad a, b \in \realset
+,\]
+где $a$ назовём действительной частью числа, а $b$ дуальной.
+
+\textbf{Сложение} и \textbf{вычитание} чисел определяется интуитивно
+\begin{align}\label{eq:dual_sumsub}
+\begin{split}
+  (a + b \dual) + (c + d \dual) = (a + c) + (b + d)\dual,
+  \\
+  (a + b \dual) - (c + d \dual) = (a - c) + (b - d)\dual.
+\end{split}
+\end{align}
+
+При \textbf{произведении} проявляется природа числа $\dual$
+\begin{equation}\label{eq:dual_mul}
+  (a + b \dual)(c + d \dual) = ac + a d \dual + b c \dual + \cancel{b d \dual^2}
+  = ac + (a d + b c)\dual
+.\end{equation}
+Физикам такое поведение может напомнить пренебрежение квадратичными поправками. Например, можно считать, что $b\dual$ и $d\dual$ являются погрешностями значений $a$ и $c$. Тогда $b d \dual^2$ мало по сравнению с остальными слагаемыми и пренебрегается.
+
+\textbf{Деление} чисел можно представить домножением числителя и знаменателя на сопряжённое к знаменателю\footnote{При этом знаменатель ненулевой, $c + d\dual \neq 0$.}
+\begin{equation}\label{eq:dual_div}
+  \frac{a + b\dual}{c + d\dual}
+  = \frac{(a + b\dual)(c - d \dual)}{(c + d\dual)(c - d\dual)}
+  = \frac{ac + (-ad + bc)\dual}{c^2}
+  = \frac{a}{c} + \frac{bc - ad}{c^2}\dual
+.\end{equation}
+
+
+
+\section{Связь с дифференциированием}
+Для дуальных чисел справедливо утверждение, демонстрирующее связь с дифференциированием.
+\begin{statement}
+\begin{equation}\label{eq:funcofdual}
+  f(a + b\dual) = f(a) + b f'(a)\dual
+.\end{equation}
+\end{statement}
+\begin{proof}
+Воспользуемся представлением функции в виде ряда Тейлора
+\[
+  f(x) = \sum_{k=0}^{\infty} \frac{f^{(k)}(x_0)}{k!} (x - x_0)^k
+.\]
+Теперь вычислим функцию от дуального числа $a + b\dual$, а в качестве $x_0$ возьмём $a$
+\begin{align*}
+  f(a + b\dual) &= \sum_{k=0}^{\infty} \frac{f^{(k)}(a)}{k!} (a + b\dual - a)^k
+  = \sum_{k=0}^{\infty} \frac{f^{(k)}(a) b^k \dual^k}{k!}
+  \\
+  &= f(a) + b f'(a) \dual + \sum_{k=2}^\infty \frac{f^{(k)}(a) b^k \dual^k}{k!}
+  \\
+  &= f(a) + b f'(a) \dual + \dual^2 \sum_{k=2}^\infty \frac{f^{(k)}(a) b^k \dual^{k-2}}{k!}
+  \\
+  &= f(a) + b f'(a) \dual
+.\end{align*}
+\end{proof}
+
+\begin{example}
+Ниже показаны вычисления функций от дуального числа $3 + 2\dual$. Чтобы показать определение функции и точку вычисления использована запись $[\text{тело функции}](\text{аргумент})$, например, $[x^2 + 3](4)$ означает вычисление $f(x) = x^2 + 3$ в точке 4, т.е. $[x^2 + 3](4) = 4^2 + 3 = 4$.
+\begin{itemize}
+
+\item Константа
+\begin{align*}
+  f(x) &= 5,
+  \\
+  f(3 + 2\dual) &= [5](3) + 2 \cdot [0](3) \dual = 5
+.\end{align*}
+
+\item Полином
+\begin{align*}
+  f(x) &= 4x^3 + x,
+  \\
+  f(3 + 2 \dual) &= [4 x^3 + x](3) + 2 \cdot [12 x^2 + 1](3) \cdot \dual
+  \\
+  &= 111 + 2 \cdot 109 \cdot \dual = 111 + 218 \dual
+.\end{align*}
+
+\item Логарифм
+\begin{align}\label{eq:example_log}
+\begin{split}
+  f(x) &= \log x,
+  \\
+  f(3 + 2 \dual) &= [\log x](3) + 2 \cdot [1/x](3) \cdot \dual = \log 3 + \frac{2}{3} \dual
+.\end{split}
+\end{align}
+\end{itemize}
+\end{example}
+
+% Параллель между сложением, вычитанием, произведением и делением
+Рассмотрим теперь \textbf{сложение} функций
+\begin{align*}
+  f(a + b \dual) + g(a + b \dual) &= (f(a) + b f'(a) \dual) + (g(a) + b g'(a) \dual)
+  \\
+  &= (f(a) + g(a)) + b (f'(a) + g'(a)) \dual
+.\end{align*}
+В действительной части мы получили сумму функций, а в дуальной присутствует сумма их производных. Положим $b = 1$ (см. \eqref{eq:dual_sumsub})
+\[
+  f(a + \dual) + g(a + \dual) = (f(a) + g(a)) + (f'(a) + g'(a)) \dual
+.\]
+Теперь в дуальной части находится сумма производных функций, она же является производной суммы $(f + g)' = f' + g'$. Таким образом, сумма функций от дуального числа $a + \dual$ является дуальным числом, действительная часть которого является суммой функций, а дуальная --- производной суммы функций. Иначе говоря, в дуальных числах соблюдается правило дифференцирования суммы функций. Аналогичное верно для \textbf{вычитания}.
+
+Проверим теперь \textbf{произведение} функций (см. \eqref{eq:dual_mul})
+\begin{align*}
+  f(a + \dual) \times g(a + \dual) &= (f(a) + f'(a) \dual) \times (g(a) + g'(a) \dual)
+  \\
+  &= f(a) g(a) + (f'(a) g(a) + f(a) g'(a)) \dual
+.\end{align*}
+И снова есть соответствие. В действительной части получаем произведение функций, а в дуальной --- производную произведения функций $(fg)' = f'g + fg'$ в точке $a$.
+
+Наконец, проверим \textbf{деление} функций (см. \eqref{eq:dual_div})
+\begin{align*}
+  \frac{f(a + \dual)}{g(a + \dual)} &= \frac{f(a) + f'(a) \dual}{g(a) + g'(a) \dual}
+  \\
+  &= \frac{f(a)}{g(a)} + \frac{f'(a) g(a) - f(a) g'(a)}{g^2(a)} \dual
+.\end{align*}
+И снова наблюдается соответствие. Действительная часть является делением функций, а дуальная --- производной деления функций $(f/g)' = (f'g - f g')/g^2$ в точке $a$.
+
+Последнее, что осталось проверить, это вычисление \textbf{сложной функции}
+\begin{align*}
+  g(f(a + \dual)) = g(f(a) + f'(a)\dual) = g(f(a)) + g'(f(a)) f'(a)\dual
+.\end{align*}
+Как видно, наблюдается соответствие с правилом дифференцирования сложной функции $(g(f(x)))' = g'(f(x)) f'(x)$.
+
+
+
+\section{Автоматическое дифференцирование}
+Тесная связь дуальных чисел с дифференцированием позволяет вычислять производные \textbf{автоматически}. Имеется ввиду следующее. Программисту требуется задать только функцию $f$, а код для вычисления производной $f'$ писать не нужно: достаточно передать алгоритму функцию и точку вычисления, а алгоритм вернёт значение функции и её производную в заданной точке.
+
+Мы рассмотрим только дифференцирование вперёд\footnote{Forward mode (accumulation) automatic differentiation.}. Этот вид автоматического дифференцирования использует правило дифференцирования сложной функции, углубляясь до тех пор, пока не останется \textquote{простая} функция. Проще всего рассмотреть пример.
+
+Пусть нам нужно вычислить значение и производную функции $f(x) = x \log{x^2} + 3$ в точке $a = 5$. Сначала построим граф вычисления функции (Рисунок \ref{fig:autodiff_func}). В вершинах этого графа расположены операции, входящее ребро показывает аргумент операции, а исходящее --- результат операции. Похожий граф является промежуточным представлением исходного кода в компиляторе.
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+  thick,
+  main/.style = {draw, circle},
+  capt/.style = {color=red}
+]
+  \node[main] (sqr) [] {$\square^2$};
+  \node[main] (inp) [below=12.5mm of sqr] {$x$};
+  \node[main] (log) [right=20mm of sqr] {$\log$};
+  \node[main] (mul) [below=12mm of log] {$\times$};
+  \node[main] (sum) [below=10mm of mul] {$+$};
+  \node       (res) [below=10mm of sum] {$3 + 5 \log{25}$};
+  \node       (a)   [left=10mm of inp] {5};
+  \node       (thr) [below=12mm of inp] {3};
+
+  \draw[->] (inp) -- node[capt, below,align=center] {$5$} (mul);
+  \draw[->] (inp) -- node[capt, left] {$5$} (sqr);
+  \draw[->] (sqr) -- node[capt, above] {$25$} (log);
+  \draw[->] (log) -- node[capt, right] {$\log{25}$} (mul);
+  \draw[->] (mul) -- node[capt, right] {$5 \log{25}$} (sum);
+  \draw[->] (a)   -- (inp);
+  \draw[->] (thr) -- (sum);
+  \draw[->] (sum) -- (res);
+
+\end{tikzpicture}
+\caption{Граф вычисления функции $f(x) = x \log{x^2} + 3$ в точке $a = 5$. Промежуточные результаты отмечены цветом.}\label{fig:autodiff_func}
+\end{figure}
+
+Как нам известно, для вычисления производной достаточно подсчитать $f(a + \dual)$. Теперь для каждой операции аргумент и результат являются дуальными числами. Знакомый пример вычисления одной операции показан на Рисунке~\ref{fig:graph_example}.
+\begin{figure}
+  \centering
+  \begin{tikzpicture}
+  [
+    thick,
+    main/.style = {draw, circle},
+    capt/.style = {color=red}
+  ]
+  \node (inp) {$3 + 2 \dual$};
+  \node[main] (log) [right=10mm of inp] {$\log$};
+  \node (res) [right=10mm of log] {$\log{3} + \dfrac{2}{3} \dual$};
+
+  \draw[->] (inp) -- (log);
+  \draw[->] (log) -- (res);
+
+  \end{tikzpicture}
+  \caption{Представление вычисления $\log{x}$ в $a = 3 + 2 \dual$. Сравните с примером \eqref{eq:example_log}.}\label{fig:graph_example}
+\end{figure}
+
+Теперь возьмём граф вычисления $f(x)$ (Рисунок~\ref{fig:autodiff_func}), но на вход подадим $5 + \dual$. Воспользуемся изложенными выше правилами для дуальных чисел и получим граф, изображённый на Рисунке~\ref{fig:graph}. В результате вычисления мы получили
+\[
+  f(5 + \dual) = 3 + 5 \log{25} + (2 + \log{25})\dual
+.\]
+Как и ожидалось, действительная часть результата $3 + 5\log{25}$ со значением функции $f(x) = x\log{x^2} + 3$ в точке $a = 5$. В свою очередь, дуальная часть $2 + \log{25}$ совпадает с производной $f'$ в той же точке
+\[
+  f'(x) = \log{x^2} + x \frac{2 x}{x^2} = 2 + \log{x^2}, \quad f'(5) = 2 + \log{25}
+.\]
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+  thick,
+  main/.style = {draw, circle},
+  capt/.style = {color=red}
+]
+  \node[main] (sqr) [] {$\square^2$};
+  \node[main] (inp) [below=12.5mm of sqr] {$x$};
+  \node[main] (log) [right=20mm of sqr] {$\log$};
+  \node[main] (mul) [below=12mm of log] {$\times$};
+  \node[main] (sum) [below=10mm of mul] {$+$};
+  \node       (res) [below=10mm of sum] {$3 + 5 \log{25} + (2 + \log{25})\dual$};
+  \node       (a)   [left=10mm of inp] {$5 + \dual$};
+  \node       (thr) [below=12mm of inp] {3};
+
+  \draw[->] (inp) -- node[capt, below,align=center] {$5+\dual$} (mul);
+  \draw[->] (inp) -- node[capt, left] {$5+\dual$} (sqr);
+  \draw[->] (sqr) -- node[capt, above] {$25 + 10\dual$} (log);
+  \draw[->] (log) -- node[capt, right] {$\log{25} + \dfrac{2}{5}\dual$} (mul);
+  \draw[->] (mul) -- node[capt, right] {$5 \log{25} + (2 + \log{25})\dual$} (sum);
+  \draw[->] (a)   -- (inp);
+  \draw[->] (thr) -- (sum);
+  \draw[->] (sum) -- (res);
+
+\end{tikzpicture}
+\caption{Граф вычисления функции $f(x) = x \log{x^2} + 3$ и её производной в точке $a = 5$. Промежуточные вычисления показаны цветом.}\label{fig:graph}
+\end{figure}
+
+\textbf{Алгоритм} автоматического дифференцирования вперёд теперь должен представляться несложным. Граф вычислений за нас строит компилятор, от нас же требуется:
+\begin{itemize}
+  \item Определить тип данных для представления дуальных чисел;
+  \item Определить приведение числовых типов данных к дуальному числу. Например, число 5 в дуальном представлении выглядит как $5 + 0\cdot\dual$;
+  \item Перегрузить необходимые операторы для дуальных чисел, например, для сложения и произведения;
+  \item Перегрузить необходимые функции в соответствии с \eqref{eq:funcofdual}. Важно, что при этом нам нужны производные только от \textquote{простых} функций.
+\end{itemize}
+
+Так, мы можем \textquote{внедрить} автоматическое дифференцирование в существующую программу без переписывания исходного кода, задающего функцию $f$.
+
+В Листинге~\ref{lst:autodiff} показан показан пример \textbf{реализации} автоматического дифференцирования на языке программирования Julia \cite{bezanson_julia_2017}. Стандартным пакетом для автоматического дифференцирования вперёд на текущий момент является ForwardDiff.jl \cite{revels_forward-mode_2016}. Тот же пример с использованием пакета показан в Листинге~\ref{lst:forwarddiff}.
+
+\jlinputlisting[%
+  caption={Пример реализации автоматического дифференцирования на Julia.},%
+  label={lst:autodiff},%
+  captionpos=b%
+]{Supplementary/autodiff.jl}
+
+\jlinputlisting[%
+  caption={Вычисление производной с помощью ForwardDiff.jl.},%
+  label={lst:forwarddiff},%
+  captionpos=b%
+]{Supplementary/forwarddiff_example.jl}
+
+
+
+\section{Заключение}
+В этой короткой заметке мы познакомились с дуальными числами и одним из их практических применений --- автоматическим дифференцированием.
+
+Мы рассмотрели только дифференцирование функции одного аргумента, однако, существуют расширения: нахождение частных производных, производных высших порядков, градиента, матриц Якоби и матриц Гессе.
+
+Простота \textquote{внедрения} автоматического дифференцирования (по крайней мере, в Julia) в существующий код делают этот вычислительный способ особенно привлекательным для расчётов. При этом разработчики программных библиотек могут оставлять автоматическое дифференцирование в качестве способа нахождения производных по умолчанию. Пользователь, в свою очередь, может создавать лишь функции, перегружая библиотечный код по своему усмотрению.
+
+
+\section{Обратная связь}
+Исходный код примеров доступен в \href{https://github.com/stepanzh/ANoteOnDualNumbersAndAutodiff}{репозитории}. Исправления и дополнения принимаются по почте или через механизм Issues в репозитории.
+
+\printbibliography
+
+\end{document}
